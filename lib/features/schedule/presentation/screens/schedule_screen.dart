@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:taskora/app/localization/app_localizations.dart';
 import 'package:taskora/app/theme/app_colors.dart';
+import 'package:taskora/app/theme/app_icons.dart';
 import 'package:taskora/core/utils/app_constants.dart';
 import 'package:taskora/core/widgets/app_button.dart';
 import 'package:taskora/core/widgets/empty_state_card.dart';
@@ -9,6 +10,7 @@ import 'package:taskora/core/widgets/status_badge.dart';
 import 'package:taskora/features/import_schedule/presentation/widgets/import_source_sheet.dart';
 import 'package:taskora/features/schedule/presentation/cubit/schedule_cubit.dart';
 import 'package:taskora/features/schedule/presentation/cubit/schedule_state.dart';
+import 'package:taskora/features/schedule/presentation/widgets/export_schedule_sheet.dart';
 import 'package:taskora/features/schedule/presentation/widgets/lecture_card.dart';
 import 'package:taskora/features/schedule/presentation/widgets/lecture_form_sheet.dart';
 
@@ -69,12 +71,20 @@ class ScheduleScreen extends StatelessWidget {
             actions: [
               IconButton(
                 tooltip: l10n.importSchedule,
-                icon: const Icon(Icons.document_scanner_outlined),
+                icon: const Icon(AppIcons.csvImport),
                 onPressed: () => _showImportSheet(context, l10n),
               ),
               IconButton(
+                tooltip: 'Export Schedule',
+                icon: const Icon(AppIcons.csvExport),
+                onPressed: () => ExportScheduleSheet.show(
+                  context,
+                  lectures: state.allLectures,
+                ),
+              ),
+              IconButton(
                 tooltip: l10n.addLecture,
-                icon: const Icon(Icons.add_rounded),
+                icon: const Icon(AppIcons.add),
                 onPressed: () => LectureFormSheet.show(
                   context,
                   initialDayIndex: selectedDay,
@@ -87,7 +97,7 @@ class ScheduleScreen extends StatelessWidget {
                 LectureFormSheet.show(context, initialDayIndex: selectedDay),
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
-            icon: const Icon(Icons.add_rounded),
+            icon: const Icon(AppIcons.add),
             label: Text(
               l10n.addLecture,
               style: const TextStyle(fontWeight: FontWeight.w600),
@@ -166,7 +176,7 @@ class ScheduleScreen extends StatelessWidget {
                         ? ListView(
                             children: [
                               EmptyStateCard(
-                                icon: Icons.calendar_month_rounded,
+                                icon: AppIcons.calendar,
                                 title: l10n.emptyDayLectures,
                                 message: l10n.emptyDayDesc,
                                 action: Wrap(

@@ -59,6 +59,21 @@ void main() {
       );
     });
 
+    test('strips Arabic diacritics (tashkeel) and tatweel (kashida)', () {
+      const withTashkeel =
+          'الْإِثْنَيْنِ قَاعَةٌ مُحَاضَرَةُ الذَّكَاءِ الاصْطِنَاعِيِّ';
+      final stripped = ArabicTextNormalizer.cleanAndNormalizeArabic(
+        withTashkeel,
+      );
+      expect(stripped, 'الإثنين قاعة محاضرة الذكاء الاصطناعي');
+
+      const withTatweel = 'الـــســـبـــت مـــعـــمـــل 3';
+      final cleanedTatweel = ArabicTextNormalizer.cleanAndNormalizeArabic(
+        withTatweel,
+      );
+      expect(cleanedTatweel, 'السبت معمل 3');
+    });
+
     test('leaves already correct Arabic untouched', () {
       const correct = 'برمجة النظم والأجهزة الذكية';
       final cleaned = ArabicTextNormalizer.cleanAndNormalizeArabic(correct);

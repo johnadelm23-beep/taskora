@@ -1,15 +1,17 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:taskora/features/reminders/domain/services/reminder_scheduler.dart';
 import 'package:taskora/features/schedule/data/repositories/schedule_repository.dart';
 import 'package:taskora/features/schedule/domain/entities/lecture_entity.dart';
 import 'package:taskora/features/schedule/presentation/cubit/schedule_state.dart';
 
 class ScheduleCubit extends Cubit<ScheduleState> {
   final ScheduleRepository _scheduleRepository;
+  final ReminderScheduler? _reminderScheduler;
   StreamSubscription<List<LectureEntity>>? _daySubscription;
   StreamSubscription<List<LectureEntity>>? _allSubscription;
 
-  ScheduleCubit(this._scheduleRepository)
+  ScheduleCubit(this._scheduleRepository, [this._reminderScheduler])
     : super(
         ScheduleState(
           selectedDayIndex: DateTime.now().weekday % 7,
@@ -108,7 +110,10 @@ class ScheduleCubit extends Cubit<ScheduleState> {
         return false;
       }
 
-      await _scheduleRepository.addLecture(lecture);
+      final id = await _scheduleRepository.addLecture(lecture);
+      await _reminderScheduler?.scheduleLectureReminder(
+        lecture.copyWith(id: id),
+      );
       emit(state.copyWith(errorMessage: null));
       return true;
     } catch (e) {
@@ -133,6 +138,7 @@ class ScheduleCubit extends Cubit<ScheduleState> {
       }
 
       await _scheduleRepository.updateLecture(lecture);
+      await _reminderScheduler?.rescheduleLectureReminder(lecture);
       emit(state.copyWith(errorMessage: null));
       return true;
     } catch (e) {
@@ -144,6 +150,7 @@ class ScheduleCubit extends Cubit<ScheduleState> {
   Future<void> deleteLecture(int id) async {
     try {
       await _scheduleRepository.deleteLecture(id);
+      await _reminderScheduler?.cancelLectureReminder(id);
     } catch (e) {
       emit(state.copyWith(errorMessage: e.toString()));
     }

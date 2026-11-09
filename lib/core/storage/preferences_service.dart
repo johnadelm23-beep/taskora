@@ -6,6 +6,10 @@ abstract class PreferencesService {
   Future<void> setThemeMode(ThemeMode mode);
   Locale? getLocale();
   Future<void> setLocale(Locale? locale);
+  bool getLectureRemindersEnabled();
+  Future<void> setLectureRemindersEnabled(bool enabled);
+  bool getTaskRemindersEnabled();
+  Future<void> setTaskRemindersEnabled(bool enabled);
 }
 
 class PreferencesServiceImpl implements PreferencesService {
@@ -13,8 +17,30 @@ class PreferencesServiceImpl implements PreferencesService {
 
   static const String _keyThemeMode = 'app_theme_mode';
   static const String _keyLanguageCode = 'app_language_code';
+  static const String _keyLectureReminders = 'app_lecture_reminders_enabled';
+  static const String _keyTaskReminders = 'app_task_reminders_enabled';
 
   PreferencesServiceImpl(this._prefs);
+
+  @override
+  bool getLectureRemindersEnabled() {
+    return _prefs.getBool(_keyLectureReminders) ?? true;
+  }
+
+  @override
+  Future<void> setLectureRemindersEnabled(bool enabled) async {
+    await _prefs.setBool(_keyLectureReminders, enabled);
+  }
+
+  @override
+  bool getTaskRemindersEnabled() {
+    return _prefs.getBool(_keyTaskReminders) ?? true;
+  }
+
+  @override
+  Future<void> setTaskRemindersEnabled(bool enabled) async {
+    await _prefs.setBool(_keyTaskReminders, enabled);
+  }
 
   @override
   ThemeMode getThemeMode() {

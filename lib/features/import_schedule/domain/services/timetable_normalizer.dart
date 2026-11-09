@@ -121,6 +121,20 @@ class TimetableNormalizer {
     return null;
   }
 
+  /// Checks whether a text snippet contains any recognizable English or Arabic weekday name.
+  static bool hasAnyDayKeyword(String text) {
+    if (text.isEmpty) return false;
+    final lower = text.toLowerCase();
+    for (final day in _englishDays.keys) {
+      if (lower.contains(day)) return true;
+    }
+    final normalizedArabic = ArabicTextNormalizer.cleanAndNormalizeArabic(text);
+    for (final day in _arabicDays.keys) {
+      if (text.contains(day) || normalizedArabic.contains(day)) return true;
+    }
+    return false;
+  }
+
   /// Normalizes a single time string (e.g., "9:00 AM", "09:00", "01:30 PM", "9:00 ص")
   /// into standard 24-hour `HH:mm` format.
   ///

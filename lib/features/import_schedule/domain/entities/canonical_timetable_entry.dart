@@ -20,6 +20,7 @@ class CanonicalTimetableEntry {
   final String instructor; // Optional
   final String room; // Optional
   final String courseCode; // Optional
+  final String notes; // Optional
 
   // Raw original string representations before normalization (for audit/review)
   final String? rawWeekday;
@@ -34,6 +35,7 @@ class CanonicalTimetableEntry {
     this.instructor = '',
     this.room = '',
     this.courseCode = '',
+    this.notes = '',
     this.rawWeekday,
     this.rawStartTime,
     this.rawEndTime,
@@ -111,6 +113,7 @@ class CanonicalTimetableEntry {
       dayOfWeek: weekday,
       startTime: startTime,
       endTime: endTime,
+      notes: notes.isNotEmpty ? notes : null,
     );
   }
 
@@ -126,6 +129,7 @@ class CanonicalTimetableEntry {
       instructor: candidate.instructor,
       room: candidate.room,
       courseCode: candidate.courseCode,
+      notes: candidate.notes ?? '',
     );
   }
 
@@ -137,6 +141,7 @@ class CanonicalTimetableEntry {
     String? instructor,
     String? room,
     String? courseCode,
+    String? notes,
     String? rawWeekday,
     String? rawStartTime,
     String? rawEndTime,
@@ -152,6 +157,7 @@ class CanonicalTimetableEntry {
       instructor: instructor ?? this.instructor,
       room: room ?? this.room,
       courseCode: courseCode ?? this.courseCode,
+      notes: notes ?? this.notes,
       rawWeekday: rawWeekday ?? this.rawWeekday,
       rawStartTime: rawStartTime ?? this.rawStartTime,
       rawEndTime: rawEndTime ?? this.rawEndTime,
@@ -169,7 +175,8 @@ class CanonicalTimetableEntry {
           endTime == other.endTime &&
           instructor == other.instructor &&
           room == other.room &&
-          courseCode == other.courseCode;
+          courseCode == other.courseCode &&
+          notes == other.notes;
 
   @override
   int get hashCode => Object.hash(
@@ -180,6 +187,7 @@ class CanonicalTimetableEntry {
     instructor,
     room,
     courseCode,
+    notes,
   );
 
   @override

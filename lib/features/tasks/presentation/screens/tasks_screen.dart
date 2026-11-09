@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:taskora/app/localization/app_localizations.dart';
 import 'package:taskora/app/theme/app_colors.dart';
+import 'package:taskora/app/theme/app_icons.dart';
 import 'package:taskora/core/utils/app_constants.dart';
 import 'package:taskora/core/widgets/app_button.dart';
 import 'package:taskora/core/widgets/app_card.dart';
@@ -66,9 +67,7 @@ class _TasksScreenState extends State<TasksScreen> {
             actions: [
               IconButton(
                 tooltip: _showSearch ? l10n.close : l10n.searchTasksHint,
-                icon: Icon(
-                  _showSearch ? Icons.close_rounded : Icons.search_rounded,
-                ),
+                icon: Icon(_showSearch ? AppIcons.close : AppIcons.search),
                 onPressed: () {
                   setState(() {
                     _showSearch = !_showSearch;
@@ -81,7 +80,7 @@ class _TasksScreenState extends State<TasksScreen> {
               ),
               IconButton(
                 tooltip: l10n.addTask,
-                icon: const Icon(Icons.add_task_rounded),
+                icon: const Icon(AppIcons.taskAdd),
                 onPressed: () => TaskFormSheet.show(context),
               ),
             ],
@@ -90,7 +89,7 @@ class _TasksScreenState extends State<TasksScreen> {
             onPressed: () => TaskFormSheet.show(context),
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
-            icon: const Icon(Icons.add_rounded),
+            icon: const Icon(AppIcons.add),
             label: Text(
               l10n.addTask,
               style: const TextStyle(fontWeight: FontWeight.w600),
@@ -111,7 +110,7 @@ class _TasksScreenState extends State<TasksScreen> {
                           theme,
                           count: state.totalPendingCount.toString(),
                           label: l10n.tasksSummaryPending,
-                          icon: Icons.pending_actions_outlined,
+                          icon: AppIcons.taskPending,
                           color: AppColors.secondary,
                           isSelected: state.activeFilter == TaskFilter.pending,
                           onTap: () => context.read<TaskCubit>().setFilter(
@@ -126,7 +125,7 @@ class _TasksScreenState extends State<TasksScreen> {
                           theme,
                           count: state.totalCompletedCount.toString(),
                           label: l10n.tasksSummaryCompleted,
-                          icon: Icons.task_alt_rounded,
+                          icon: AppIcons.taskCompleted,
                           color: AppColors.primary,
                           isSelected:
                               state.activeFilter == TaskFilter.completed,
@@ -142,7 +141,7 @@ class _TasksScreenState extends State<TasksScreen> {
                           theme,
                           count: state.totalOverdueCount.toString(),
                           label: l10n.tasksSummaryOverdue,
-                          icon: Icons.warning_amber_rounded,
+                          icon: AppIcons.taskOverdue,
                           color: AppColors.error,
                           isSelected: state.activeFilter == TaskFilter.overdue,
                           onTap: () => context.read<TaskCubit>().setFilter(
@@ -161,10 +160,13 @@ class _TasksScreenState extends State<TasksScreen> {
                       autofocus: true,
                       decoration: InputDecoration(
                         hintText: l10n.searchTasksHint,
-                        prefixIcon: const Icon(Icons.search_rounded),
+                        prefixIcon: const Icon(AppIcons.search),
                         suffixIcon: _searchController.text.isNotEmpty
                             ? IconButton(
-                                icon: const Icon(Icons.clear_rounded, size: 18),
+                                icon: const Icon(
+                                  AppIcons.close,
+                                  size: AppIcons.sizeSmall,
+                                ),
                                 onPressed: () {
                                   _searchController.clear();
                                   context.read<TaskCubit>().setSearchQuery('');
@@ -341,28 +343,28 @@ class _TasksScreenState extends State<TasksScreen> {
     if (state.searchQuery.trim().isNotEmpty) {
       title = l10n.emptyTasksSearch;
       message = l10n.emptyTasksSearchDesc;
-      icon = Icons.search_off_rounded;
+      icon = AppIcons.search;
     } else {
       switch (state.activeFilter) {
         case TaskFilter.pending:
           title = l10n.emptyTasksPending;
           message = l10n.emptyTasksPendingDesc;
-          icon = Icons.done_all_rounded;
+          icon = AppIcons.check;
           break;
         case TaskFilter.completed:
           title = l10n.emptyTasksCompleted;
           message = l10n.emptyTasksCompletedDesc;
-          icon = Icons.task_alt_rounded;
+          icon = AppIcons.taskCompleted;
           break;
         case TaskFilter.overdue:
           title = l10n.emptyTasksOverdue;
           message = l10n.emptyTasksOverdueDesc;
-          icon = Icons.thumb_up_alt_outlined;
+          icon = AppIcons.check;
           break;
         case TaskFilter.all:
           title = l10n.emptyTasksAll;
           message = l10n.emptyTasksAllDesc;
-          icon = Icons.checklist_rounded;
+          icon = AppIcons.taskPending;
           break;
       }
     }

@@ -235,6 +235,12 @@ class ArabicTextNormalizer {
     return processed.join('\n');
   }
 
+  /// Removes Arabic diacritics (tashkeel/harakat) and tatweel (kashida elongation).
+  static String stripTashkeelAndTatweel(String text) {
+    if (text.isEmpty) return text;
+    return text.replaceAll(RegExp(r'[\u064B-\u065F\u0640]'), '');
+  }
+
   /// Cleans and fully normalizes Arabic text from PDF / OCR extraction.
   static String cleanAndNormalizeArabic(String text) {
     if (text.trim().isEmpty) return text;
@@ -244,8 +250,11 @@ class ArabicTextNormalizer {
     final cleanedLines = lines.map((line) {
       if (line.trim().isEmpty) return line;
 
+      // 0. Strip Tashkeel (harakat) and Tatweel (kashida)
+      var l = stripTashkeelAndTatweel(line);
+
       // 1. Repair Mojibake on this line
-      var l = fixMojibake(line);
+      l = fixMojibake(l);
 
       // 2. Convert Presentation Forms to standard Unicode Arabic
       l = normalizePresentationForms(l);

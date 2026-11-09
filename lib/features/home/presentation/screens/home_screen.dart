@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:taskora/app/localization/app_localizations.dart';
 import 'package:taskora/app/theme/app_colors.dart';
+import 'package:taskora/app/theme/app_icons.dart';
 import 'package:taskora/core/utils/app_constants.dart';
 import 'package:taskora/core/widgets/app_button.dart';
 import 'package:taskora/core/widgets/app_card.dart';
@@ -134,7 +135,7 @@ class HomeScreen extends StatelessWidget {
           onPressed: () {
             context.read<NavigationCubit>().selectTab(3);
           },
-          icon: const Icon(Icons.settings_outlined, size: 20),
+          icon: const Icon(AppIcons.navSettings, size: AppIcons.sizeMedium),
           style: IconButton.styleFrom(
             backgroundColor: theme.colorScheme.surfaceContainerHighest,
           ),
@@ -160,7 +161,7 @@ class HomeScreen extends StatelessWidget {
             theme,
             count: todayLecturesCount.toString(),
             label: l10n.overviewLectures,
-            icon: Icons.menu_book_rounded,
+            icon: AppIcons.lecture,
             color: AppColors.primary,
             onTap: () => context.read<NavigationCubit>().selectTab(1),
           ),
@@ -172,7 +173,7 @@ class HomeScreen extends StatelessWidget {
             theme,
             count: pendingTasksCount.toString(),
             label: l10n.overviewTasks,
-            icon: Icons.assignment_outlined,
+            icon: AppIcons.taskPending,
             color: AppColors.secondary,
             onTap: () => context.read<NavigationCubit>().selectTab(2),
           ),
@@ -184,7 +185,7 @@ class HomeScreen extends StatelessWidget {
             theme,
             count: upcomingDeadlinesCount.toString(),
             label: l10n.overviewDeadlines,
-            icon: Icons.access_time_rounded,
+            icon: AppIcons.time,
             color: AppColors.tertiary,
             onTap: () => context.read<NavigationCubit>().selectTab(2),
           ),
@@ -265,9 +266,9 @@ class HomeScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppConstants.radius12),
                   ),
                   child: const Icon(
-                    Icons.event_available_rounded,
+                    AppIcons.calendar,
                     color: AppColors.primary,
-                    size: 28,
+                    size: AppIcons.sizeLarge,
                   ),
                 ),
                 const SizedBox(width: AppConstants.space16),
@@ -317,7 +318,7 @@ class HomeScreen extends StatelessWidget {
                 context,
                 theme,
                 label: l10n.quickActionAddTask,
-                icon: Icons.add_task_rounded,
+                icon: AppIcons.taskAdd,
                 color: AppColors.primary,
                 onTap: () => TaskFormSheet.show(context),
               ),
@@ -328,7 +329,7 @@ class HomeScreen extends StatelessWidget {
                 context,
                 theme,
                 label: l10n.quickActionAddLecture,
-                icon: Icons.add_circle_outline_rounded,
+                icon: AppIcons.add,
                 color: AppColors.secondary,
                 onTap: () => LectureFormSheet.show(
                   context,
@@ -342,7 +343,7 @@ class HomeScreen extends StatelessWidget {
                 context,
                 theme,
                 label: l10n.quickActionImport,
-                icon: Icons.document_scanner_outlined,
+                icon: AppIcons.csvImport,
                 color: AppColors.tertiary,
                 onTap: () => _showImportSheet(context, l10n),
               ),
@@ -411,7 +412,7 @@ class HomeScreen extends StatelessWidget {
         ),
         if (todayLectures.isEmpty)
           EmptyStateCard(
-            icon: Icons.calendar_today_rounded,
+            icon: AppIcons.calendar,
             title: l10n.noLecturesToday,
             message: l10n.emptyScheduleMsg,
             action: Row(

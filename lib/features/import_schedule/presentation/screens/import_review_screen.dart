@@ -105,11 +105,7 @@ class ImportReviewScreen extends StatelessWidget {
     AppLocalizations l10n,
     ThemeData theme,
   ) {
-    final message =
-        state.processingMessage ??
-        (state.sourceFilePath?.toLowerCase().endsWith('.pdf') == true
-            ? l10n.importProcessingPdf
-            : l10n.importProcessingOcr);
+    final message = state.processingMessage ?? l10n.importProcessingCsv;
 
     return Center(
       child: Padding(
@@ -355,9 +351,10 @@ class ImportReviewScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppConstants.space8),
                 Text(
-                  '• Timetables need readable weekdays (Sunday–Saturday) and clear time ranges (e.g., 09:00 - 10:30).\n'
-                  '• Scanned documents or compressed screenshots may have blurred text.\n'
-                  '• You can use our standard CSV template for 100% accurate, instant import, or add your classes manually.',
+                  '• CSV files must include the required columns: Weekday, Course Name, Start Time, and End Time.\n'
+                  '• Instructor and Room columns are optional.\n'
+                  '• Both Arabic and English headers and day names are supported.\n'
+                  '• Use our standard CSV template for 100% accurate, instant import, or add your classes manually.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     height: 1.5,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
@@ -416,7 +413,7 @@ class ImportReviewScreen extends StatelessWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => ImportSourceSheet.show(context),
-                  icon: const Icon(Icons.photo_library_outlined, size: 18),
+                  icon: const Icon(Icons.file_upload_outlined, size: 18),
                   label: const Text('Try Another File'),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
@@ -471,10 +468,8 @@ class ImportReviewScreen extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(
-                  state.sourceFileName!.toLowerCase().endsWith('.pdf')
-                      ? Icons.picture_as_pdf_outlined
-                      : Icons.image_outlined,
+                const Icon(
+                  Icons.table_chart_outlined,
                   size: 16,
                   color: AppColors.primary,
                 ),

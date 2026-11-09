@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:taskora/app/app.dart';
 import 'package:taskora/app/localization/app_localizations.dart';
+import 'package:taskora/app/theme/app_icons.dart';
 import 'package:taskora/app/theme/app_theme.dart';
 import 'package:taskora/core/database/app_database.dart';
 import 'package:taskora/core/di/injection_container.dart';
@@ -147,18 +148,23 @@ void main() {
         await tester.pumpAndSettle();
 
         // Go to Schedule tab
-        await tester.tap(find.byIcon(Icons.calendar_month_outlined));
+        await tester.tap(
+          find.descendant(
+            of: find.byType(NavigationBar),
+            matching: find.byIcon(AppIcons.navSchedule),
+          ),
+        );
         await tester.pumpAndSettle();
 
         // Tap document scanner icon in app bar
-        await tester.tap(find.byIcon(Icons.document_scanner_outlined).first);
+        await tester.tap(find.byIcon(AppIcons.csvImport).first);
         await tester.pumpAndSettle();
 
         expect(find.byType(ImportSourceSheet), findsOneWidget);
         expect(find.text('Select Schedule Document'), findsOneWidget);
-        expect(find.text('Choose from Gallery'), findsOneWidget);
-        expect(find.text('Take Photo with Camera'), findsOneWidget);
-        expect(find.text('Import from PDF Document'), findsOneWidget);
+        expect(find.text('Select CSV File (.csv)'), findsOneWidget);
+        expect(find.text('Download CSV Template'), findsOneWidget);
+        expect(find.text('Required CSV Columns'), findsOneWidget);
 
         // Tap back / dismiss
         await tester.tapAt(const Offset(20, 20));

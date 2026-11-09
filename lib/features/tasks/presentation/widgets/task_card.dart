@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:taskora/app/localization/app_localizations.dart';
 import 'package:taskora/app/theme/app_colors.dart';
+import 'package:taskora/app/theme/app_icons.dart';
 import 'package:taskora/core/utils/app_constants.dart';
 import 'package:taskora/core/widgets/app_card.dart';
 import 'package:taskora/core/widgets/status_badge.dart';
@@ -51,12 +52,12 @@ class TaskCard extends StatelessWidget {
                 constraints: const BoxConstraints(),
                 icon: Icon(
                   task.isCompleted
-                      ? Icons.check_circle_rounded
-                      : Icons.radio_button_unchecked_rounded,
+                      ? AppIcons.taskCompleted
+                      : AppIcons.taskPending,
                   color: task.isCompleted
                       ? AppColors.primary
                       : theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                  size: 24,
+                  size: AppIcons.sizeDefault,
                 ),
                 tooltip: task.isCompleted
                     ? 'Mark as incomplete'
@@ -106,14 +107,14 @@ class TaskCard extends StatelessWidget {
               // 3. Action Buttons (Edit & Delete)
               if (onEdit != null)
                 IconButton(
-                  icon: const Icon(Icons.edit_outlined, size: 20),
+                  icon: const Icon(AppIcons.edit, size: AppIcons.sizeMedium),
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   tooltip: l10n.editTask,
                   onPressed: onEdit,
                 ),
               if (onDelete != null)
                 IconButton(
-                  icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                  icon: const Icon(AppIcons.delete, size: AppIcons.sizeMedium),
                   color: AppColors.error,
                   tooltip: l10n.deleteTask,
                   onPressed: onDelete,
@@ -159,7 +160,11 @@ class TaskCard extends StatelessWidget {
               StatusBadge(
                 label: priorityLabel,
                 color: priorityColor,
-                icon: Icons.flag_rounded,
+                icon: task.priority == TaskPriority.high
+                    ? AppIcons.priorityHigh
+                    : task.priority == TaskPriority.medium
+                    ? AppIcons.priorityMedium
+                    : AppIcons.priorityLow,
               ),
 
               // Overdue or Completed indicator
@@ -167,13 +172,13 @@ class TaskCard extends StatelessWidget {
                 StatusBadge(
                   label: l10n.taskCompleted,
                   color: AppColors.primary,
-                  icon: Icons.task_alt_rounded,
+                  icon: AppIcons.taskCompleted,
                 )
               else if (task.isOverdue)
                 StatusBadge(
                   label: l10n.taskOverdue,
                   color: AppColors.error,
-                  icon: Icons.warning_amber_rounded,
+                  icon: AppIcons.taskOverdue,
                 ),
             ],
           ),
@@ -204,7 +209,7 @@ class TaskCard extends StatelessWidget {
     return StatusBadge(
       label: dateStr,
       color: isOverdue ? AppColors.error : AppColors.secondary,
-      icon: isOverdue ? Icons.error_outline_rounded : Icons.access_time_rounded,
+      icon: isOverdue ? AppIcons.taskOverdue : AppIcons.time,
     );
   }
 }

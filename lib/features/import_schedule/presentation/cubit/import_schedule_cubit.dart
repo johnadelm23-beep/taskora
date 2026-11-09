@@ -4,110 +4,40 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:taskora/features/import_schedule/domain/entities/extracted_lecture_candidate.dart';
 import 'package:taskora/features/import_schedule/domain/entities/import_result.dart';
 import 'package:taskora/features/import_schedule/domain/services/csv_timetable_parser.dart';
 import 'package:taskora/features/import_schedule/domain/services/import_diagnostic_logger.dart';
-import 'package:taskora/features/import_schedule/domain/services/text_extractor_service.dart';
-import 'package:taskora/features/import_schedule/domain/services/timetable_parser.dart';
 import 'package:taskora/features/import_schedule/presentation/cubit/import_schedule_state.dart';
+import 'package:taskora/features/reminders/domain/services/reminder_scheduler.dart';
 import 'package:taskora/features/schedule/data/repositories/schedule_repository.dart';
 import 'package:taskora/features/schedule/domain/entities/lecture_entity.dart';
 
+/// Cubit managing the CSV-only timetable import lifecycle.
+///
+/// Pipeline:
+/// Select CSV (.csv only) -> UTF-8/BOM Decoding -> CsvTimetableParser ->
+/// Canonical Candidates -> Conflict & Duplicate Detection -> Interactive Review -> Drift DB Persistence.
 class ImportScheduleCubit extends Cubit<ImportScheduleState> {
-  final TextExtractorService textExtractor;
-  final TimetableParser parser;
+  final CsvTimetableParser csvParser;
   final ScheduleRepository scheduleRepository;
-  final ImagePicker _imagePicker;
+  final ReminderScheduler? reminderScheduler;
 
   ImportScheduleCubit({
-    required this.textExtractor,
-    required this.parser,
+    CsvTimetableParser? csvParser,
     required this.scheduleRepository,
-    ImagePicker? imagePicker,
-  }) : _imagePicker = imagePicker ?? ImagePicker(),
+    this.reminderScheduler,
+  }) : csvParser = csvParser ?? CsvTimetableParser(),
        super(const ImportScheduleState());
 
-  /// Pick an image from gallery or camera and extract lecture candidates
-  Future<void> pickAndProcessImage(ImageSource source) async {
-    try {
-      emit(state.copyWith(status: ImportStatus.picking, clearError: true));
-
-      final pickedFile = await _imagePicker.pickImage(
-        source: source,
-        maxWidth: 2400,
-        maxHeight: 2400,
-        imageQuality: 95,
-      );
-
-      if (pickedFile == null) {
-        emit(state.copyWith(status: ImportStatus.initial));
-        return;
-      }
-
-      await _processFile(
-        filePath: pickedFile.path,
-        fileName: pickedFile.name,
-        isImage: true,
-      );
-    } catch (e) {
-      emit(
-        state.copyWith(
-          status: ImportStatus.failure,
-          errorMessage: 'Failed to process image: ${e.toString()}',
-        ),
-      );
-    }
-  }
-
-  /// Pick a PDF document and extract lecture candidates
-  Future<void> pickAndProcessPdf() async {
-    try {
-      emit(state.copyWith(status: ImportStatus.picking, clearError: true));
-
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf'],
-        allowMultiple: false,
-      );
-
-      if (result == null || result.files.isEmpty) {
-        emit(state.copyWith(status: ImportStatus.initial));
-        return;
-      }
-
-      final file = result.files.first;
-      final path = file.path;
-      if (path == null) {
-        emit(
-          state.copyWith(
-            status: ImportStatus.failure,
-            errorMessage: 'Cannot access the selected PDF file path.',
-          ),
-        );
-        return;
-      }
-
-      await _processFile(filePath: path, fileName: file.name, isImage: false);
-    } catch (e) {
-      emit(
-        state.copyWith(
-          status: ImportStatus.failure,
-          errorMessage: 'Failed to pick or read PDF document: ${e.toString()}',
-        ),
-      );
-    }
-  }
-
-  /// Pick a CSV document with standard timetable headers
+  /// Pick a CSV document with standard timetable headers (.csv only)
   Future<void> pickAndProcessCsv() async {
     try {
       emit(state.copyWith(status: ImportStatus.picking, clearError: true));
 
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['csv', 'txt'],
+        allowedExtensions: ['csv'],
         allowMultiple: false,
         withData: true,
       );
@@ -118,23 +48,31 @@ class ImportScheduleCubit extends Cubit<ImportScheduleState> {
       }
 
       final file = result.files.first;
-      String csvText = '';
+      final fileName = file.name;
 
+      // Validate file extension explicitly
+      final extension = fileName.contains('.')
+          ? fileName.split('.').last.toLowerCase()
+          : '';
+      if (extension != 'csv') {
+        emit(
+          state.copyWith(
+            status: ImportStatus.failure,
+            errorMessage:
+                'Unsupported file format ($fileName). Only .csv files are supported.',
+          ),
+        );
+        return;
+      }
+
+      String csvText = '';
       if (file.bytes != null && file.bytes!.isNotEmpty) {
-        try {
-          csvText = utf8.decode(file.bytes!);
-        } catch (_) {
-          csvText = latin1.decode(file.bytes!);
-        }
+        csvText = _decodeBytes(file.bytes!);
       } else if (file.path != null) {
         final ioFile = File(file.path!);
         if (await ioFile.exists()) {
-          try {
-            csvText = await ioFile.readAsString();
-          } catch (_) {
-            final rawBytes = await ioFile.readAsBytes();
-            csvText = latin1.decode(rawBytes);
-          }
+          final rawBytes = await ioFile.readAsBytes();
+          csvText = _decodeBytes(rawBytes);
         }
       }
 
@@ -159,6 +97,63 @@ class ImportScheduleCubit extends Cubit<ImportScheduleState> {
         state.copyWith(
           status: ImportStatus.failure,
           errorMessage: 'Failed to pick or parse CSV document: ${e.toString()}',
+        ),
+      );
+    }
+  }
+
+  /// Process a CSV file by path, enforcing .csv extension
+  Future<void> processCsvFile(String filePath) async {
+    try {
+      emit(state.copyWith(status: ImportStatus.picking, clearError: true));
+
+      final ioFile = File(filePath);
+      final fileName = filePath.split(Platform.pathSeparator).last;
+      final extension = fileName.contains('.')
+          ? fileName.split('.').last.toLowerCase()
+          : '';
+
+      if (extension != 'csv') {
+        emit(
+          state.copyWith(
+            status: ImportStatus.failure,
+            errorMessage:
+                'Unsupported file format ($fileName). Only .csv files are supported.',
+          ),
+        );
+        return;
+      }
+
+      if (!await ioFile.exists()) {
+        emit(
+          state.copyWith(
+            status: ImportStatus.failure,
+            errorMessage: 'File not found at $filePath',
+          ),
+        );
+        return;
+      }
+
+      final bytes = await ioFile.readAsBytes();
+      final csvText = _decodeBytes(bytes);
+
+      if (csvText.trim().isEmpty) {
+        emit(
+          state.copyWith(
+            status: ImportStatus.failure,
+            errorMessage:
+                'The selected CSV file is empty or could not be read.',
+          ),
+        );
+        return;
+      }
+
+      await processCsvContent(csvText, fileName: fileName, filePath: filePath);
+    } catch (e) {
+      emit(
+        state.copyWith(
+          status: ImportStatus.failure,
+          errorMessage: 'Failed to read CSV file: ${e.toString()}',
         ),
       );
     }
@@ -225,137 +220,24 @@ class ImportScheduleCubit extends Cubit<ImportScheduleState> {
     }
   }
 
-  /// Process direct raw text (e.g., from unit tests or pasted input)
-  Future<void> processRawText(String text, {String? fileName}) async {
-    emit(
-      state.copyWith(
-        status: ImportStatus.processing,
-        processingMessage: 'Analyzing timetable text...',
-        sourceFileName: fileName ?? 'Pasted Timetable',
-        clearError: true,
-      ),
-    );
-
+  /// Decodes bytes supporting UTF-8 (with optional BOM) and Latin-1 fallback
+  static String _decodeBytes(List<int> bytes) {
+    if (bytes.isEmpty) return '';
     try {
-      final existingLectures = await scheduleRepository.getAllLectures();
-      final parsed = await compute(_parseScheduleInIsolate, text);
-      final evaluated = _evaluateCandidates(parsed, existingLectures);
-
-      emit(
-        state.copyWith(
-          status: ImportStatus.review,
-          rawExtractedText: text,
-          candidates: evaluated,
-          existingLectures: existingLectures,
-          clearProcessingMessage: true,
-        ),
-      );
-    } catch (e) {
-      emit(
-        state.copyWith(
-          status: ImportStatus.failure,
-          errorMessage: 'Failed to parse text: ${e.toString()}',
-        ),
-      );
+      // utf8.decode handles UTF-8 characters cleanly
+      var text = utf8.decode(bytes);
+      // Strip UTF-8 BOM if present
+      if (text.startsWith('\uFEFF')) {
+        text = text.substring(1);
+      }
+      return text;
+    } catch (_) {
+      // Fallback to latin1 for legacy encodings
+      return latin1.decode(bytes);
     }
   }
 
-  Future<void> _processFile({
-    required String filePath,
-    required String fileName,
-    required bool isImage,
-  }) async {
-    emit(
-      state.copyWith(
-        status: ImportStatus.processing,
-        processingMessage: isImage
-            ? 'Extracting text with on-device OCR...'
-            : 'Extracting selectable text from PDF...',
-        sourceFileName: fileName,
-        sourceFilePath: filePath,
-        isImage: isImage,
-      ),
-    );
-
-    try {
-      final String extractedText;
-      if (isImage) {
-        extractedText = await textExtractor.extractTextFromImage(filePath);
-      } else {
-        extractedText = await textExtractor.extractTextFromPdf(filePath);
-      }
-
-      emit(
-        state.copyWith(
-          processingMessage: 'Analyzing and parsing lecture schedule...',
-        ),
-      );
-
-      final existingLectures = await scheduleRepository.getAllLectures();
-      final parsed = await compute(_parseScheduleInIsolate, extractedText);
-
-      ImportDiagnosticLogger.log(
-        'parseSchedule:result',
-        metadata: {
-          'extractedLength': extractedText.length,
-          'parsedRows': parsed.length,
-          'validCount': parsed.where((c) => c.isValid).length,
-        },
-      );
-
-      // Development-only diagnostic logging of candidate validation status
-      if (kDebugMode) {
-        for (var i = 0; i < parsed.length; i++) {
-          final c = parsed[i];
-          ImportDiagnosticLogger.log(
-            'candidate:inspected',
-            metadata: {
-              'index': i,
-              'course': c.courseName,
-              'day': c.dayOfWeek,
-              'time': '${c.startTime}-${c.endTime}',
-              'room': c.room,
-              'inst': c.instructor,
-              'isValid': c.isValid,
-              if (!c.isValid) 'errors': c.validationErrors,
-            },
-          );
-        }
-      }
-
-      if (parsed.isEmpty) {
-        ImportDiagnosticLogger.log(
-          'parseSchedule:rejected',
-          metadata: {
-            'reason':
-                'Could not automatically identify timetable entries or time ranges in document',
-            'extractedLength': extractedText.length,
-          },
-        );
-      }
-
-      final evaluated = _evaluateCandidates(parsed, existingLectures);
-
-      emit(
-        state.copyWith(
-          status: ImportStatus.review,
-          rawExtractedText: extractedText,
-          candidates: evaluated,
-          existingLectures: existingLectures,
-          clearProcessingMessage: true,
-        ),
-      );
-    } catch (e) {
-      emit(
-        state.copyWith(
-          status: ImportStatus.failure,
-          errorMessage: 'Extraction failed: ${e.toString()}',
-        ),
-      );
-    }
-  }
-
-  /// Update candidate by matching candidate ID or index
+  /// Update candidate by matching candidate index
   void updateCandidate(int index, ExtractedLectureCandidate updated) {
     if (index < 0 || index >= state.candidates.length) return;
 
@@ -483,7 +365,9 @@ class ImportScheduleCubit extends Cubit<ImportScheduleState> {
         final entity = candidate.toLectureEntity();
         try {
           final id = await scheduleRepository.addLecture(entity);
-          savedLectures.add(entity.copyWith(id: id));
+          final savedLecture = entity.copyWith(id: id);
+          savedLectures.add(savedLecture);
+          await reminderScheduler?.scheduleLectureReminder(savedLecture);
         } catch (_) {
           failed++;
         }
@@ -578,12 +462,6 @@ class ImportScheduleCubit extends Cubit<ImportScheduleState> {
 
     return result;
   }
-}
-
-/// Standalone top-level function for background isolate execution via compute().
-List<ExtractedLectureCandidate> _parseScheduleInIsolate(String text) {
-  final parser = TimetableParser();
-  return parser.parse(text);
 }
 
 /// Standalone top-level function for background CSV isolate execution via compute().

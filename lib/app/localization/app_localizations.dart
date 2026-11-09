@@ -157,6 +157,13 @@ class AppLocalizations {
       'lang_english': 'English',
       'lang_arabic': 'العربية (Arabic)',
       'storage_privacy_section': 'Storage & Privacy',
+      // Notifications & Reminders
+      'notifications_section': 'Notifications & Reminders',
+      'lecture_reminders': 'Class Reminders',
+      'lecture_reminders_desc': 'Notify 15 minutes before upcoming classes',
+      'task_reminders': 'Task Deadline Reminders',
+      'task_reminders_desc': 'Notify 1 hour before task deadlines',
+      'notifications_disabled_hint': 'Enable notifications in device settings',
       'offline_status_title': 'Offline Mode Active',
       'offline_status_desc':
           'Data is stored locally on this device. No account required.',
@@ -225,6 +232,17 @@ class AppLocalizations {
       'copy_to_clipboard': 'Copy to Clipboard',
       'save_csv_file': 'Save CSV File',
       'import_processing_csv': 'Analyzing and validating CSV timetable...',
+      'backup_title': 'Backup Database',
+      'backup_desc': 'Export all timetable and tasks to a JSON archive',
+      'restore_title': 'Restore Database',
+      'restore_desc': 'Restore timetable and tasks from a backup archive',
+      'backup_success': 'Backup successfully saved!',
+      'restore_confirm_title': 'Restore from Backup?',
+      'restore_confirm_desc':
+          'Restoring will replace all current timetable lectures and tasks with the backup contents. This action cannot be undone.\n\nDo you want to proceed?',
+      'restore_btn': 'Restore & Overwrite',
+      'restore_success': 'Database successfully restored!',
+      'restore_invalid_file': 'Invalid or corrupted backup file',
     },
     'ar': {
       'app_title': 'تاسكورا',
@@ -360,6 +378,13 @@ class AppLocalizations {
       'lang_english': 'English (الإنجليزية)',
       'lang_arabic': 'العربية',
       'storage_privacy_section': 'التخزين والخصوصية',
+      // Notifications & Reminders
+      'notifications_section': 'التنبيهات والتذكيرات',
+      'lecture_reminders': 'تنبيهات المحاضرات',
+      'lecture_reminders_desc': 'تنبيه قبل بدء المحاضرة بـ 15 دقيقة',
+      'task_reminders': 'تنبيهات مواعيد المهام',
+      'task_reminders_desc': 'تنبيه قبل موعد التسليم بساعة',
+      'notifications_disabled_hint': 'قم بتمكين الإشعارات من إعدادات الجهاز',
       'offline_status_title': 'وضع عدم الاتصال مفعل',
       'offline_status_desc':
           'البيانات مخزنة محلياً بالكامل على هذا الجهاز دون الحاجة لحساب.',
@@ -428,6 +453,17 @@ class AppLocalizations {
       'copy_to_clipboard': 'نسخ إلى الحافظة',
       'save_csv_file': 'حفظ ملف CSV',
       'import_processing_csv': 'جارٍ فحص وتحليل جدول CSV...',
+      'backup_title': 'نسخ احتياطي للبيانات',
+      'backup_desc': 'تصدير الجدول الدراسي والمهام في ملف أرشيف JSON',
+      'restore_title': 'استعادة البيانات',
+      'restore_desc': 'استعادة الجدول والمهام من ملف نسخة احتياطية',
+      'backup_success': 'تم حفظ النسخة الاحتياطية بنجاح!',
+      'restore_confirm_title': 'استعادة من النسخة الاحتياطية؟',
+      'restore_confirm_desc':
+          'ستؤدي الاستعادة إلى استبدال جميع المحاضرات والمهام الحالية بمحتويات النسخة الاحتياطية. لا يمكن التراجع عن هذا الإجراء.\n\nهل ترغب في المتابعة؟',
+      'restore_btn': 'استعادة واستبدال',
+      'restore_success': 'تمت استعادة البيانات بنجاح!',
+      'restore_invalid_file': 'ملف النسخة الاحتياطية غير صالح أو تالف',
     },
   };
 
@@ -548,6 +584,13 @@ class AppLocalizations {
   String get langEnglish => translate('lang_english');
   String get langArabic => translate('lang_arabic');
   String get storagePrivacySection => translate('storage_privacy_section');
+  String get notificationsSection => translate('notifications_section');
+  String get lectureReminders => translate('lecture_reminders');
+  String get lectureRemindersDesc => translate('lecture_reminders_desc');
+  String get taskReminders => translate('task_reminders');
+  String get taskRemindersDesc => translate('task_reminders_desc');
+  String get notificationsDisabledHint =>
+      translate('notifications_disabled_hint');
   String get offlineStatusTitle => translate('offline_status_title');
   String get offlineStatusDesc => translate('offline_status_desc');
   String get offlinePrivateStorage => translate('offline_private_storage');
@@ -613,6 +656,18 @@ class AppLocalizations {
   String get copyToClipboard => translate('copy_to_clipboard');
   String get saveCsvFile => translate('save_csv_file');
   String get importProcessingCsv => translate('import_processing_csv');
+
+  // Backup & Restore Getters
+  String get backupTitle => translate('backup_title');
+  String get backupDesc => translate('backup_desc');
+  String get restoreTitle => translate('restore_title');
+  String get restoreDesc => translate('restore_desc');
+  String get backupSuccess => translate('backup_success');
+  String get restoreConfirmTitle => translate('restore_confirm_title');
+  String get restoreConfirmDesc => translate('restore_confirm_desc');
+  String get restoreBtn => translate('restore_btn');
+  String get restoreSuccess => translate('restore_success');
+  String get restoreInvalidFile => translate('restore_invalid_file');
 }
 
 class _AppLocalizationsDelegate

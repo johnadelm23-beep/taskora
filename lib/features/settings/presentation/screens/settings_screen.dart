@@ -3,11 +3,19 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:taskora/app/localization/app_localizations.dart';
 import 'package:taskora/app/localization/locale_cubit.dart';
 import 'package:taskora/app/theme/app_colors.dart';
+import 'package:taskora/app/theme/app_icons.dart';
 import 'package:taskora/app/theme/theme_cubit.dart';
+import 'package:taskora/core/backup/backup_payload.dart';
+import 'package:taskora/core/backup/backup_service.dart';
+import 'package:taskora/core/di/injection_container.dart';
 import 'package:taskora/core/utils/app_constants.dart';
 import 'package:taskora/core/widgets/app_card.dart';
 import 'package:taskora/core/widgets/section_header.dart';
 import 'package:taskora/core/widgets/status_badge.dart';
+import 'package:taskora/features/reminders/presentation/cubit/reminders_cubit.dart';
+import 'package:taskora/features/reminders/presentation/cubit/reminders_state.dart';
+import 'package:taskora/features/schedule/presentation/cubit/schedule_cubit.dart';
+import 'package:taskora/features/schedule/presentation/widgets/export_schedule_sheet.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -47,9 +55,9 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                       child: const Icon(
-                        Icons.palette_outlined,
+                        AppIcons.theme,
                         color: AppColors.primary,
-                        size: 20,
+                        size: AppIcons.sizeMedium,
                       ),
                     ),
                     title: Text(
@@ -65,7 +73,10 @@ class SettingsScreen extends StatelessWidget {
                           color: AppColors.primary,
                         ),
                         const SizedBox(width: AppConstants.space8),
-                        const Icon(Icons.chevron_right_rounded, size: 20),
+                        const Icon(
+                          AppIcons.chevronRight,
+                          size: AppIcons.sizeMedium,
+                        ),
                       ],
                     ),
                     onTap: () => _showThemeModeDialog(context, l10n, themeMode),
@@ -90,9 +101,9 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                       child: const Icon(
-                        Icons.language_rounded,
+                        AppIcons.language,
                         color: AppColors.secondary,
-                        size: 20,
+                        size: AppIcons.sizeMedium,
                       ),
                     ),
                     title: Text(
@@ -110,7 +121,10 @@ class SettingsScreen extends StatelessWidget {
                           color: AppColors.secondary,
                         ),
                         const SizedBox(width: AppConstants.space8),
-                        const Icon(Icons.chevron_right_rounded, size: 20),
+                        const Icon(
+                          AppIcons.chevronRight,
+                          size: AppIcons.sizeMedium,
+                        ),
                       ],
                     ),
                     onTap: () => _showLanguageDialog(context, l10n, locale),
@@ -120,7 +134,82 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: AppConstants.space24),
 
-            // Section 2: Storage & Privacy
+            // Section 2: Notifications & Reminders
+            SectionHeader(title: l10n.notificationsSection),
+            const SizedBox(height: AppConstants.space4),
+            BlocBuilder<RemindersCubit, RemindersState>(
+              builder: (context, remindersState) {
+                final remindersCubit = context.read<RemindersCubit>();
+                return AppCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      SwitchListTile.adaptive(
+                        secondary: Container(
+                          padding: const EdgeInsets.all(AppConstants.space8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(
+                              AppConstants.radius8,
+                            ),
+                          ),
+                          child: const Icon(
+                            AppIcons.notificationsActive,
+                            color: AppColors.primary,
+                            size: AppIcons.sizeMedium,
+                          ),
+                        ),
+                        title: Text(
+                          l10n.lectureReminders,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(l10n.lectureRemindersDesc),
+                        value: remindersState.lectureRemindersEnabled,
+                        activeTrackColor: AppColors.primary,
+                        onChanged: (enabled) {
+                          remindersCubit.toggleLectureReminders(enabled);
+                        },
+                      ),
+                      Divider(
+                        height: 1,
+                        indent: AppConstants.space16,
+                        endIndent: AppConstants.space16,
+                        color: theme.colorScheme.outline.withValues(alpha: 0.1),
+                      ),
+                      SwitchListTile.adaptive(
+                        secondary: Container(
+                          padding: const EdgeInsets.all(AppConstants.space8),
+                          decoration: BoxDecoration(
+                            color: AppColors.secondary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(
+                              AppConstants.radius8,
+                            ),
+                          ),
+                          child: const Icon(
+                            AppIcons.notifications,
+                            color: AppColors.secondary,
+                            size: AppIcons.sizeMedium,
+                          ),
+                        ),
+                        title: Text(
+                          l10n.taskReminders,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(l10n.taskRemindersDesc),
+                        value: remindersState.taskRemindersEnabled,
+                        activeTrackColor: AppColors.primary,
+                        onChanged: (enabled) {
+                          remindersCubit.toggleTaskReminders(enabled);
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: AppConstants.space24),
+
+            // Section 3: Storage & Privacy
             SectionHeader(title: l10n.storagePrivacySection),
             const SizedBox(height: AppConstants.space4),
             AppCard(
@@ -138,9 +227,9 @@ class SettingsScreen extends StatelessWidget {
                           ),
                         ),
                         child: const Icon(
-                          Icons.verified_user_outlined,
+                          AppIcons.backup,
                           color: AppColors.tertiary,
-                          size: 20,
+                          size: AppIcons.sizeMedium,
                         ),
                       ),
                       const SizedBox(width: AppConstants.space12),
@@ -171,6 +260,102 @@ class SettingsScreen extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(height: AppConstants.space12),
+
+            // Export Schedule CSV Tile
+            AppCard(
+              padding: EdgeInsets.zero,
+              child: ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(AppConstants.space8),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppConstants.radius8),
+                  ),
+                  child: const Icon(
+                    AppIcons.csvExport,
+                    color: AppColors.secondary,
+                    size: AppIcons.sizeMedium,
+                  ),
+                ),
+                title: const Text(
+                  'Export Timetable (CSV)',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: const Text('Export schedule to UTF-8 BOM CSV file'),
+                trailing: const Icon(
+                  AppIcons.chevronRight,
+                  size: AppIcons.sizeMedium,
+                ),
+                onTap: () {
+                  final lectures = context
+                      .read<ScheduleCubit>()
+                      .state
+                      .allLectures;
+                  ExportScheduleSheet.show(context, lectures: lectures);
+                },
+              ),
+            ),
+            const SizedBox(height: AppConstants.space12),
+
+            // Backup Database Tile
+            AppCard(
+              padding: EdgeInsets.zero,
+              child: ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(AppConstants.space8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppConstants.radius8),
+                  ),
+                  child: const Icon(
+                    AppIcons.backup,
+                    color: AppColors.primary,
+                    size: AppIcons.sizeMedium,
+                  ),
+                ),
+                title: Text(
+                  l10n.backupTitle,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(l10n.backupDesc),
+                trailing: const Icon(
+                  AppIcons.chevronRight,
+                  size: AppIcons.sizeMedium,
+                ),
+                onTap: () => _handleCreateBackup(context, l10n),
+              ),
+            ),
+            const SizedBox(height: AppConstants.space12),
+
+            // Restore Database Tile
+            AppCard(
+              padding: EdgeInsets.zero,
+              child: ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(AppConstants.space8),
+                  decoration: BoxDecoration(
+                    color: AppColors.tertiary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppConstants.radius8),
+                  ),
+                  child: const Icon(
+                    AppIcons.csvImport,
+                    color: AppColors.tertiary,
+                    size: AppIcons.sizeMedium,
+                  ),
+                ),
+                title: Text(
+                  l10n.restoreTitle,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(l10n.restoreDesc),
+                trailing: const Icon(
+                  AppIcons.chevronRight,
+                  size: AppIcons.sizeMedium,
+                ),
+                onTap: () => _handleRestoreBackup(context, l10n),
+              ),
+            ),
             const SizedBox(height: AppConstants.space24),
 
             // Section 3: About
@@ -182,18 +367,15 @@ class SettingsScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(AppConstants.space8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(
-                            AppConstants.radius8,
-                          ),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.radius8,
                         ),
-                        child: const Icon(
-                          Icons.school_rounded,
-                          color: Colors.white,
-                          size: 20,
+                        child: Image.asset(
+                          'assets/images/logo/taskora_icon_solid.png',
+                          width: 36,
+                          height: 36,
+                          fit: BoxFit.cover,
                         ),
                       ),
                       const SizedBox(width: AppConstants.space12),
@@ -324,7 +506,7 @@ class SettingsScreen extends StatelessWidget {
     return ListTile(
       title: Text(title),
       trailing: isSelected
-          ? const Icon(Icons.check_rounded, color: AppColors.primary)
+          ? const Icon(AppIcons.check, color: AppColors.primary)
           : null,
       onTap: () {
         parentContext.read<ThemeCubit>().setThemeMode(mode);
@@ -351,7 +533,7 @@ class SettingsScreen extends StatelessWidget {
               ListTile(
                 title: Text(l10n.langEnglish),
                 trailing: currentCode == 'en'
-                    ? const Icon(Icons.check_rounded, color: AppColors.primary)
+                    ? const Icon(AppIcons.check, color: AppColors.primary)
                     : null,
                 onTap: () {
                   context.read<LocaleCubit>().setLocale(const Locale('en'));
@@ -361,7 +543,7 @@ class SettingsScreen extends StatelessWidget {
               ListTile(
                 title: Text(l10n.langArabic),
                 trailing: currentCode == 'ar'
-                    ? const Icon(Icons.check_rounded, color: AppColors.primary)
+                    ? const Icon(AppIcons.check, color: AppColors.primary)
                     : null,
                 onTap: () {
                   context.read<LocaleCubit>().setLocale(const Locale('ar'));
@@ -373,5 +555,110 @@ class SettingsScreen extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<void> _handleCreateBackup(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
+    try {
+      final backupService = sl<BackupService>();
+      final jsonStr = await backupService.createBackupJson();
+      final path = await backupService.saveBackupToFile(jsonStr);
+      if (path != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.backupSuccess),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Backup failed: $e'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleRestoreBackup(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
+    try {
+      final backupService = sl<BackupService>();
+      final payload = await backupService.pickAndValidateBackup();
+      if (payload == null) return; // User dismissed picker
+
+      if (!context.mounted) return;
+
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: Text(l10n.restoreConfirmTitle),
+            content: Text(
+              'Found ${payload.lectures.length} lectures and ${payload.tasks.length} tasks in this backup file.\n\n${l10n.restoreConfirmDesc}',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: Text(l10n.close),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: Text(l10n.restoreBtn),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (confirmed == true && context.mounted) {
+        await backupService.restoreBackup(payload);
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '${l10n.restoreSuccess} (${payload.lectures.length} lectures, ${payload.tasks.length} tasks)',
+              ),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } on BackupValidationException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${l10n.restoreInvalidFile}: ${e.message}'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Restore error: $e'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 }

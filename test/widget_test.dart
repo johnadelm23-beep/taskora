@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:taskora/app/app.dart';
+import 'package:taskora/app/theme/app_icons.dart';
 import 'package:taskora/core/database/app_database.dart';
 import 'package:taskora/core/di/injection_container.dart';
 import 'package:taskora/features/home/presentation/screens/home_screen.dart';
@@ -85,17 +86,32 @@ void main() {
     expect(find.byType(NavigationBar), findsOneWidget);
 
     // Tap Schedule destination
-    await tester.tap(find.byIcon(Icons.calendar_month_outlined));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.byIcon(AppIcons.navSchedule),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.byType(ScheduleScreen), findsOneWidget);
 
     // Tap Tasks destination
-    await tester.tap(find.byIcon(Icons.checklist_outlined));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.byIcon(AppIcons.navTasks),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.byType(TasksScreen), findsOneWidget);
 
     // Tap Settings destination
-    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.byIcon(AppIcons.navSettings),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.byType(SettingsScreen), findsOneWidget);
 
@@ -111,7 +127,12 @@ void main() {
       await tester.pumpAndSettle();
 
       // Switch to Schedule tab
-      await tester.tap(find.byIcon(Icons.calendar_month_outlined));
+      await tester.tap(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.byIcon(AppIcons.navSchedule),
+        ),
+      );
       await tester.pumpAndSettle();
 
       final scheduleCubit = tester
@@ -172,7 +193,12 @@ void main() {
       await tester.pumpAndSettle();
 
       // Switch to Tasks tab
-      await tester.tap(find.byIcon(Icons.checklist_outlined));
+      await tester.tap(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.byIcon(AppIcons.navTasks),
+        ),
+      );
       await tester.pumpAndSettle();
       expect(find.byType(TasksScreen), findsOneWidget);
 

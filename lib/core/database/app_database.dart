@@ -58,4 +58,22 @@ class AppDatabase extends _$AppDatabase {
   static QueryExecutor _openConnection() {
     return driftDatabase(name: 'taskora_db');
   }
+
+  /// Atomically replaces all existing lectures and tasks with the restored records.
+  /// If any error occurs during insertion, the transaction rolls back cleanly.
+  Future<void> restoreBackup({
+    required List<LecturesCompanion> restoredLectures,
+    required List<TasksCompanion> restoredTasks,
+  }) async {
+    await transaction(() async {
+      await delete(lectures).go();
+      await delete(tasks).go();
+      for (final lecture in restoredLectures) {
+        await into(lectures).insert(lecture);
+      }
+      for (final task in restoredTasks) {
+        await into(tasks).insert(task);
+      }
+    });
+  }
 }

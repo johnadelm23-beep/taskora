@@ -9,8 +9,7 @@ import 'package:taskora/app/theme/app_theme.dart';
 import 'package:taskora/core/database/app_database.dart';
 import 'package:taskora/core/di/injection_container.dart';
 import 'package:taskora/features/import_schedule/domain/entities/extracted_lecture_candidate.dart';
-import 'package:taskora/features/import_schedule/domain/services/text_extractor_service.dart';
-import 'package:taskora/features/import_schedule/domain/services/timetable_parser.dart';
+import 'package:taskora/features/import_schedule/domain/services/csv_timetable_parser.dart';
 import 'package:taskora/features/import_schedule/presentation/cubit/import_schedule_cubit.dart';
 import 'package:taskora/features/import_schedule/presentation/screens/import_review_screen.dart';
 import 'package:taskora/features/import_schedule/presentation/widgets/candidate_lecture_card.dart';
@@ -19,19 +18,10 @@ import 'package:taskora/features/schedule/data/repositories/schedule_repository.
 import 'package:taskora/features/schedule/domain/entities/lecture_entity.dart';
 import 'package:taskora/features/shell/presentation/cubit/navigation_cubit.dart';
 
-class MockTextExtractor implements TextExtractorService {
-  @override
-  Future<String> extractTextFromImage(String imagePath) async => '';
-
-  @override
-  Future<String> extractTextFromPdf(String pdfPath) async => '';
-}
-
 void main() {
   late AppDatabase db;
   late ScheduleRepository repository;
-  late TimetableParser parser;
-  late MockTextExtractor mockExtractor;
+  late CsvTimetableParser csvParser;
   late ImportScheduleCubit importCubit;
   late NavigationCubit navCubit;
 
@@ -41,11 +31,9 @@ void main() {
     db = AppDatabase(NativeDatabase.memory());
     await initDependencies(customDatabase: db);
     repository = sl<ScheduleRepository>();
-    parser = sl<TimetableParser>();
-    mockExtractor = MockTextExtractor();
+    csvParser = sl<CsvTimetableParser>();
     importCubit = ImportScheduleCubit(
-      textExtractor: mockExtractor,
-      parser: parser,
+      csvParser: csvParser,
       scheduleRepository: repository,
     );
     navCubit = sl<NavigationCubit>();

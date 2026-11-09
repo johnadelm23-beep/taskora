@@ -84,6 +84,20 @@ Thursday;Software Engineering;08:30;10:00;Dr. Nour;Room 301
       expect(candidates.first.isValid, isTrue);
     });
 
+    test('supports UTF-8 with BOM character prefix', () {
+      const csv =
+          '\uFEFFWeekday,Course Name,Start Time,End Time,Instructor,Room\n'
+          'Sunday,Machine Learning,10:00,11:30,Dr. Hinton,Lab 5\n';
+
+      final candidates = parser.parseToCandidates(csv);
+      expect(candidates.length, 1);
+      expect(candidates.first.dayOfWeek, 0);
+      expect(candidates.first.courseName, 'Machine Learning');
+      expect(candidates.first.startTime, '10:00');
+      expect(candidates.first.endTime, '11:30');
+      expect(candidates.first.isValid, isTrue);
+    });
+
     test('supports Arabic headers and Arabic weekday names', () {
       const csv = '''
 اليوم,اسم المقرر,وقت البدء,وقت الانتهاء,المحاضر,القاعة

@@ -26,6 +26,10 @@ class CsvTimetableParser {
 
   /// Parses CSV text content into a list of [CanonicalTimetableEntry] objects.
   List<CanonicalTimetableEntry> parseToCanonical(String csvContent) {
+    // Strip UTF-8 Byte Order Mark (BOM) if present
+    if (csvContent.startsWith('\uFEFF')) {
+      csvContent = csvContent.substring(1);
+    }
     if (csvContent.trim().isEmpty) return [];
 
     final rawLines = _splitCsvLines(csvContent);
@@ -72,6 +76,8 @@ class CsvTimetableParser {
       final rawEnd = _getCell(cells, columnIndices['endTime']!);
       final rawInstructor = _getCell(cells, columnIndices['instructor']);
       final rawRoom = _getCell(cells, columnIndices['room']);
+      final rawCourseCode = _getCell(cells, columnIndices['courseCode']);
+      final rawNotes = _getCell(cells, columnIndices['notes']);
 
       // Skip example rows
       final upperCourse = rawCourse.toUpperCase();
@@ -104,18 +110,25 @@ class CsvTimetableParser {
         rawInstructor,
       );
       final cleanedRoom = ArabicTextNormalizer.cleanAndNormalizeArabic(rawRoom);
+      final cleanedNotes = ArabicTextNormalizer.cleanAndNormalizeArabic(
+        rawNotes,
+      );
 
-      // Extract optional course code if present inside course name (e.g., "CS302 Mobile Apps")
-      final courseCodeMatch = RegExp(
-        r'\b([A-Z]{2,6}[-\s]?[0-9]{3,4}[A-Z]?)\b',
-      ).firstMatch(cleanedCourse);
-      final courseCode = courseCodeMatch?.group(1)?.replaceAll(' ', '') ?? '';
+      // Extract optional course code: use explicit column if present, else fallback to regex
+      var courseCode = rawCourseCode.trim();
+      if (courseCode.isEmpty) {
+        final courseCodeMatch = RegExp(
+          r'\b([A-Z]{2,6}[-\s]?[0-9]{3,4}[A-Z]?)\b',
+        ).firstMatch(cleanedCourse);
+        courseCode = courseCodeMatch?.group(1)?.replaceAll(' ', '') ?? '';
+      }
 
       results.add(
         CanonicalTimetableEntry(
           weekday: normalizedDay,
           courseName: cleanedCourse,
           courseCode: courseCode,
+          notes: cleanedNotes,
           startTime: normalizedStart,
           endTime: normalizedEnd,
           instructor: cleanedInstructor,
@@ -155,6 +168,8 @@ class CsvTimetableParser {
     int? endTimeIdx;
     int? instructorIdx;
     int? roomIdx;
+    int? courseCodeIdx;
+    int? notesIdx;
 
     for (var i = 0; i < cells.length; i++) {
       final name = cells[i].trim().toLowerCase();
@@ -168,6 +183,17 @@ class CsvTimetableParser {
         'يوم',
       ])) {
         weekdayIdx = i;
+      }
+      // Course Code / Code / كود المقرر / رمز المقرر (Checked before Course Name!)
+      else if (_matchesHeader(name, [
+        'course code',
+        'course_code',
+        'code',
+        'كود المقرر',
+        'رمز المقرر',
+        'كود المادة',
+      ])) {
+        courseCodeIdx = i;
       }
       // Course Name / Course / Subject / اسم المقرر / المقرر
       else if (_matchesHeader(name, [
@@ -236,6 +262,17 @@ class CsvTimetableParser {
       ])) {
         roomIdx = i;
       }
+      // Notes / Note / ملاحظات / وصف
+      else if (_matchesHeader(name, [
+        'notes',
+        'note',
+        'description',
+        'ملاحظات',
+        'ملاحظة',
+        'الوصف',
+      ])) {
+        notesIdx = i;
+      }
     }
 
     // Required headers must all be present
@@ -253,6 +290,8 @@ class CsvTimetableParser {
       'endTime': endTimeIdx,
       'instructor': instructorIdx ?? -1,
       'room': roomIdx ?? -1,
+      'courseCode': courseCodeIdx ?? -1,
+      'notes': notesIdx ?? -1,
     };
   }
 

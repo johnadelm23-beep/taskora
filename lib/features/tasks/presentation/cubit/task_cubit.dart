@@ -1,14 +1,17 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:taskora/features/reminders/domain/services/reminder_scheduler.dart';
 import 'package:taskora/features/tasks/data/repositories/task_repository.dart';
 import 'package:taskora/features/tasks/domain/entities/task_entity.dart';
 import 'package:taskora/features/tasks/presentation/cubit/task_state.dart';
 
 class TaskCubit extends Cubit<TaskState> {
   final TaskRepository _repository;
+  final ReminderScheduler? _reminderScheduler;
   StreamSubscription<List<TaskEntity>>? _tasksSubscription;
 
-  TaskCubit(this._repository) : super(const TaskState(isLoading: true)) {
+  TaskCubit(this._repository, [this._reminderScheduler])
+    : super(const TaskState(isLoading: true)) {
     _init();
   }
 
@@ -73,7 +76,8 @@ class TaskCubit extends Cubit<TaskState> {
         updatedAt: now,
       );
 
-      await _repository.createTask(task);
+      final id = await _repository.createTask(task);
+      await _reminderScheduler?.scheduleTaskReminder(task.copyWith(id: id));
       emit(state.copyWith(isSaving: false));
       return true;
     } catch (e) {
@@ -111,6 +115,9 @@ class TaskCubit extends Cubit<TaskState> {
       );
 
       final success = await _repository.updateTask(updated);
+      if (success) {
+        await _reminderScheduler?.rescheduleTaskReminder(updated);
+      }
       emit(state.copyWith(isSaving: false));
       return success;
     } catch (e) {
@@ -127,6 +134,14 @@ class TaskCubit extends Cubit<TaskState> {
   Future<void> toggleTaskCompletion(int id, bool isCompleted) async {
     try {
       await _repository.toggleTaskCompletion(id, isCompleted);
+      if (isCompleted) {
+        await _reminderScheduler?.cancelTaskReminder(id);
+      } else {
+        final task = await _repository.getTaskById(id);
+        if (task != null) {
+          await _reminderScheduler?.scheduleTaskReminder(task);
+        }
+      }
     } catch (e) {
       emit(state.copyWith(errorMessage: 'Failed to update task status: $e'));
     }
@@ -135,6 +150,7 @@ class TaskCubit extends Cubit<TaskState> {
   Future<void> deleteTask(int id) async {
     try {
       await _repository.deleteTask(id);
+      await _reminderScheduler?.cancelTaskReminder(id);
     } catch (e) {
       emit(state.copyWith(errorMessage: 'Failed to delete task: $e'));
     }

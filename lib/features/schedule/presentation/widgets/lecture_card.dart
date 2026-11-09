@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:taskora/app/theme/app_colors.dart';
+import 'package:taskora/app/theme/app_icons.dart';
 import 'package:taskora/core/utils/app_constants.dart';
 import 'package:taskora/core/widgets/app_card.dart';
 import 'package:taskora/core/widgets/status_badge.dart';
@@ -65,12 +66,12 @@ class LectureCard extends StatelessWidget {
               StatusBadge(
                 label: '${lecture.startTime} - ${lecture.endTime}',
                 color: accentColor,
-                icon: Icons.access_time_rounded,
+                icon: AppIcons.time,
               ),
               if (onEdit != null) ...[
                 const SizedBox(width: AppConstants.space8),
                 IconButton(
-                  icon: const Icon(Icons.edit_outlined, size: 20),
+                  icon: const Icon(AppIcons.edit, size: AppIcons.sizeMedium),
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   tooltip: 'Edit Lecture',
                   onPressed: onEdit,
@@ -78,7 +79,7 @@ class LectureCard extends StatelessWidget {
               ],
               if (onDelete != null) ...[
                 IconButton(
-                  icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                  icon: const Icon(AppIcons.delete, size: AppIcons.sizeMedium),
                   color: AppColors.error,
                   tooltip: 'Delete Lecture',
                   onPressed: onDelete,
@@ -97,8 +98,8 @@ class LectureCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.room_outlined,
-                      size: 16,
+                      AppIcons.room,
+                      size: AppIcons.sizeSmall,
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                     const SizedBox(width: AppConstants.space4),
@@ -117,8 +118,8 @@ class LectureCard extends StatelessWidget {
                   child: Row(
                     children: [
                       Icon(
-                        Icons.person_outline_rounded,
-                        size: 16,
+                        AppIcons.instructor,
+                        size: AppIcons.sizeSmall,
                         color: theme.colorScheme.onSurface.withValues(
                           alpha: 0.6,
                         ),

@@ -10,6 +10,7 @@ import 'package:taskora/app/theme/theme_cubit.dart';
 import 'package:taskora/core/di/injection_container.dart';
 import 'package:taskora/core/utils/app_constants.dart';
 import 'package:taskora/features/import_schedule/presentation/cubit/import_schedule_cubit.dart';
+import 'package:taskora/features/reminders/presentation/cubit/reminders_cubit.dart';
 import 'package:taskora/features/schedule/presentation/cubit/schedule_cubit.dart';
 import 'package:taskora/features/shell/presentation/cubit/navigation_cubit.dart';
 import 'package:taskora/features/tasks/presentation/cubit/task_cubit.dart';
@@ -29,6 +30,7 @@ class TaskoraApp extends StatelessWidget {
         BlocProvider<ImportScheduleCubit>(
           create: (_) => sl<ImportScheduleCubit>(),
         ),
+        BlocProvider<RemindersCubit>(create: (_) => sl<RemindersCubit>()),
       ],
       child: ScreenUtilInit(
         designSize: AppConstants.designSize,
